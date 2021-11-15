@@ -76,14 +76,14 @@ section {
 
     .pos-indicator {
       position: absolute;
-      right: .3em;
+      right: .5em;
       top: .25em;
       display: inline-block;
-      transform: none;
       left: auto;
       font-size: .7rem;
       font-weight: bold;
       opacity: 0.35;
+      user-select: none;
     }
   }
 
