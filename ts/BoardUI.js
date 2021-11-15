@@ -113,7 +113,7 @@ export default class BoardUI {
         });
     }
     async makeMove(startI, endI) {
-        var _a;
+        var _a, _b, _c;
         console.log(`Making move ${startI} - ${endI}`);
         (_a = this.board.pieces[endI]) === null || _a === void 0 ? void 0 : _a.element.remove();
         this.board.makeMove(startI, endI);
@@ -130,21 +130,20 @@ export default class BoardUI {
         else {
             this.audio.playMove();
         }
+        this.board.pieces[endI].element.remove();
+        (_b = this.cells[endI]) === null || _b === void 0 ? void 0 : _b.append(this.board.pieces[endI].element);
+        (_c = this.query('.highlight')) === null || _c === void 0 ? void 0 : _c.forEach(el => el.classList.remove('highlight'));
+        if (this.board.isInMate()) {
+            console.log(`Checkmate. ${this.board.whiteToMove ? 'Black' : 'White'} wins`);
+        }
     }
     async attemptMove(endI) {
-        var _a, _b;
         if (this.draggedPiece) {
             const startI = this.draggedPiece._positionIndex;
             const draggedPiece = this.draggedPiece;
             let before = performance.now();
             if (this.board.canMakeMove(startI, endI)) {
                 await this.makeMove(startI, endI);
-                if (this.board.isInMate()) {
-                    console.log(`Checkmate. ${this.board.whiteToMove ? 'Black' : 'White'} wins`);
-                }
-                draggedPiece.element.remove();
-                (_a = this.cells[endI]) === null || _a === void 0 ? void 0 : _a.append(draggedPiece.element);
-                (_b = this.query('.highlight')) === null || _b === void 0 ? void 0 : _b.forEach(el => el.classList.remove('highlight'));
                 const move = await this.bot.makeMove(this.board);
                 await this.makeMove(...move);
             }

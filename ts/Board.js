@@ -4,13 +4,14 @@ const openingFENString = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0
 class Board {
     constructor(pieces = null, FENString = openingFENString) {
         this._legalMoves = [];
-        if (pieces !== null)
-            this.pieces = pieces;
-        else
-            this.parseFENString(FENString || openingFENString);
         this.fullMoveTimer = 0;
         this.halfmoveClock = 0;
         this.enPassantTarget = null;
+        if (pieces !== null)
+            this.pieces = pieces;
+        else {
+            this.parseFENString(FENString || openingFENString);
+        }
         this.calculateAttackedPieces();
     }
     get colorToMove() {
@@ -52,8 +53,51 @@ class Board {
         this.whiteToMove = parts[1] === 'w';
         // 3. castling
         this.castling = parts[2];
+        // 4. en-passant (not supported)
+        // 5. halfmove clock
+        this.halfmoveClock = parseInt(parts[4]);
+        // 6. fullmove number
+        this.fullMoveTimer = parseInt(parts[5]);
+    }
+    /**
+     * Outputs the current board as a FEN string
+     */
+    getFENstring() {
+        let parts = [];
+        // 1. pieces
+        let ranks = [];
+        for (let y = 0; y < 8; y++) {
+            let rank = '';
+            let emptyFileCount = 0;
+            for (let x = 0; x < 8; x++) {
+                if (this.pieces[y * 8 + x]) {
+                    if (emptyFileCount) {
+                        rank += emptyFileCount;
+                    }
+                    rank += this.pieces[y * 8 + x].piece;
+                    emptyFileCount = 0;
+                }
+                else {
+                    emptyFileCount++;
+                }
+                if (x === 7 && emptyFileCount) {
+                    rank += emptyFileCount;
+                }
+            }
+            ranks.push(rank);
+        }
+        parts.push(ranks.join('/'));
+        // 2. color to move
+        parts.push(this.whiteToMove ? 'w' : 'b');
+        // 3. castling
+        parts.push(this.castling);
+        // 4. en-passant (not supported)
+        parts.push('-');
         // 4. halfmove clock
-        // 5. fullmove number
+        parts.push(this.halfmoveClock);
+        // 5. fullmove timer
+        parts.push(this.fullMoveTimer);
+        return parts.join(' ');
     }
     makeMove(startI, finishI) {
         const piece = this.pieces[startI];
@@ -77,19 +121,20 @@ class Board {
     boardAfterMove(startI, finishI) {
         let board = new Board([]);
         let pieces = [];
+        // const startingFEN = this.getFENstring();
         for (let x = 0; x < 64; x++) {
             if (this.pieces[x]) {
                 // copy all pieces to a new instance, to prevent context/pointer fuckery when we change the position
                 board.pieces[x] = new Piece(board, this.pieces[x].piece, this.pieces[x].color, this.pieces[x]._positionIndex);
             }
         }
+        board.pieces = this.pieces;
         board.calculateAttackedPieces();
         board.fullMoveTimer = this.fullMoveTimer;
         board.halfmoveClock = this.halfmoveClock;
         board.whiteToMove = this.whiteToMove;
         board.castling = this.castling;
         board.enPassantTarget = this.enPassantTarget;
-        board.makeMove(startI, finishI);
         return board;
     }
     calculateAttackedPieces() {

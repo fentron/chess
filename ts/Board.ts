@@ -173,8 +173,6 @@ class Board {
     }
 
     boardAfterMove(startI, finishI): Board {
-
-        let before = performance.now();
         let board = new Board([]);
 
         let pieces = [];
@@ -195,13 +193,6 @@ class Board {
         board.whiteToMove = this.whiteToMove;
         board.castling = this.castling;
         board.enPassantTarget = this.enPassantTarget;
-
-        // this.makeMove(startI, finishI);
-        // const resultingFEN = this.getFENstring();
-        // this.parseFENString(startingFEN); // reset the board
-
-        let after = performance.now();
-        console.log(`boardAfterMove took ${after-before}ms`);
 
         return board;
     }
@@ -263,8 +254,6 @@ class Board {
 
         let legalMoves = [];
 
-        let before = performance.now();
-
         for (let x = 0; x < 64; x++) {
             let piece = this.pieces[x];
             if (piece) {
@@ -279,9 +268,6 @@ class Board {
                 }
             }
         }
-
-        let after = performance.now();
-        console.log(`getAllLegalMoves took ${after - before}ms`);
 
         this._legalMoves = legalMoves;
 
