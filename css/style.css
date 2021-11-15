@@ -66,14 +66,14 @@ section > * + * {
 }
 #board .cell .pos-indicator {
   position: absolute;
-  right: 0.3em;
+  right: 0.5em;
   top: 0.25em;
   display: inline-block;
-  transform: none;
   left: auto;
   font-size: 0.7rem;
   font-weight: bold;
   opacity: 0.35;
+  user-select: none;
 }
 #board .dragged {
   position: fixed !important;

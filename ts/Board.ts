@@ -8,7 +8,7 @@ const openingFENString = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0
 class Board {
     pieces: Pieces;
     _attackedPieces: Pieces;
-    _legalMoves: [number,number][] = [];
+    _legalMoves: [number, number][] = [];
     whiteToMove: boolean;
     castling: string;
     halfmoveClock: number;
@@ -16,14 +16,16 @@ class Board {
     enPassantTarget: number;
 
     constructor(pieces: Pieces = null, FENString = openingFENString) {
-        if (pieces !== null)
-            this.pieces = pieces;
-        else
-            this.parseFENString(FENString || openingFENString);
-
         this.fullMoveTimer = 0;
         this.halfmoveClock = 0;
         this.enPassantTarget = null;
+
+        if (pieces !== null)
+            this.pieces = pieces;
+        else {
+            this.parseFENString(FENString || openingFENString);
+
+        }
 
         this.calculateAttackedPieces();
     }
@@ -82,9 +84,64 @@ class Board {
         // 3. castling
         this.castling = parts[2];
 
-        // 4. halfmove clock
+        // 4. en-passant (not supported)
 
-        // 5. fullmove number
+        // 5. halfmove clock
+        this.halfmoveClock = parseInt(parts[4]);
+
+        // 6. fullmove number
+        this.fullMoveTimer = parseInt(parts[5]);
+    }
+
+    /**
+     * Outputs the current board as a FEN string
+     */
+    getFENstring(): string {
+        let parts = [];
+
+        // 1. pieces
+        let ranks = [];
+        for (let y = 0; y < 8; y++) {
+            let rank = '';
+            let emptyFileCount = 0;
+
+            for (let x = 0; x < 8; x++) {
+                if (this.pieces[y * 8 + x]) {
+                    if (emptyFileCount) {
+                        rank += emptyFileCount;
+                    }
+
+                    rank += this.pieces[y * 8 + x].piece;
+                    emptyFileCount = 0;
+                } else {
+                    emptyFileCount++;
+                }
+
+                if (x === 7 && emptyFileCount) {
+                    rank += emptyFileCount;
+                }
+            }
+
+            ranks.push(rank);
+        }
+        parts.push(ranks.join('/'));
+
+        // 2. color to move
+        parts.push(this.whiteToMove ? 'w' : 'b');
+
+        // 3. castling
+        parts.push(this.castling);
+
+        // 4. en-passant (not supported)
+        parts.push('-');
+
+        // 4. halfmove clock
+        parts.push(this.halfmoveClock);
+
+        // 5. fullmove timer
+        parts.push(this.fullMoveTimer);
+
+        return parts.join(' ');
     }
 
     makeMove(startI: number, finishI: number): boolean {
@@ -116,9 +173,13 @@ class Board {
     }
 
     boardAfterMove(startI, finishI): Board {
+
+        let before = performance.now();
         let board = new Board([]);
 
         let pieces = [];
+
+        // const startingFEN = this.getFENstring();
 
         for (let x = 0; x < 64; x++) {
             if (this.pieces[x]) {
@@ -126,6 +187,8 @@ class Board {
                 board.pieces[x] = new Piece(board, this.pieces[x].piece, this.pieces[x].color, this.pieces[x]._positionIndex);
             }
         }
+        board.pieces = this.pieces;
+
         board.calculateAttackedPieces();
         board.fullMoveTimer = this.fullMoveTimer;
         board.halfmoveClock = this.halfmoveClock;
@@ -133,7 +196,12 @@ class Board {
         board.castling = this.castling;
         board.enPassantTarget = this.enPassantTarget;
 
-        board.makeMove(startI, finishI);
+        // this.makeMove(startI, finishI);
+        // const resultingFEN = this.getFENstring();
+        // this.parseFENString(startingFEN); // reset the board
+
+        let after = performance.now();
+        console.log(`boardAfterMove took ${after-before}ms`);
 
         return board;
     }
@@ -183,17 +251,19 @@ class Board {
         return (
             this.pieces[startI] && // piece exists
             this.pieces[startI].color === this.colorToMove && // correct color to move
-            this.pieces[startI].getLegalMoveIndexes().includes(finishI) &&  // legal move for this piece
+            this.pieces[startI].getLegalMoveIndexes().includes(finishI) && // legal move for this piece
             !boardAfterMove.isInCheck(boardAfterMove.colorToMove) // not a move that will put us in check
         );
     }
 
-    getAllLegalMoves():[number, number][] {
+    getAllLegalMoves() {
         if (this._legalMoves !== null) {
             return this._legalMoves;
         }
 
         let legalMoves = [];
+
+        let before = performance.now();
 
         for (let x = 0; x < 64; x++) {
             let piece = this.pieces[x];
@@ -209,6 +279,9 @@ class Board {
                 }
             }
         }
+
+        let after = performance.now();
+        console.log(`getAllLegalMoves took ${after - before}ms`);
 
         this._legalMoves = legalMoves;
 

@@ -1,22 +1,18 @@
 import Board from "./Board.js";
 import {Color, Piece} from "./Piece.js";
 import AudioPlayer from "./AudioPlayer.js";
-import Bot from "./bots/Bot.js";
-import BigInter from "./bots/BigInter.js";
 
 export default class BoardUI {
     board: Board;
     cells: HTMLElement[];
     el: HTMLElement;
     audio: AudioPlayer;
-    bot: Bot;
     currentMousePosition: number; // i of the grid the mouse is currently over
     _draggedPiece: Piece;
 
     constructor(el: HTMLElement) {
         this.board = new Board();
         this.audio = new AudioPlayer();
-        this.bot = new BigInter();
         this.el = el;
 
         // construct cells
@@ -97,16 +93,14 @@ export default class BoardUI {
         if (!this.board.pieces[i] || e.button !== 0)
             return;
 
-        const piece = this.board.pieces[this.currentMousePosition];
+        const piece = this.board.pieces[this.currentMousePosition] || null;
+        this.draggedPiece = piece;
 
-        if (piece && piece.color === Color.White) {
-            this.draggedPiece = piece;
+        if (piece) {
             this.draggedPiece.element.style.left = e.screenX + 'px';
             this.draggedPiece.element.style.top = e.screenY - 120 + 'px';
         }
-        this.el.addEventListener('mouseup', this.onDragMouseUp, {
-            passive: true
-        });
+        this.el.addEventListener('mouseup', this.onDragMouseUp);
     }
 
     onDragMouseUp() {
@@ -144,49 +138,39 @@ export default class BoardUI {
         });
     }
 
-    async makeMove(startI, endI) {
-        console.log(`Making move ${startI} - ${endI}`);
-        this.board.pieces[endI]?.element.remove();
-
-        this.board.makeMove(startI, endI);
-
-        if (this.board.isInMate()) {
-            this.audio.playMate();
-        } else if (this.board.isInCheck(this.board.nextToMove)) {
-            this.audio.playCheck();
-        } else if (
-            this.board.pieces[startI] && this.board.pieces[endI] &&
-            this.board.pieces[endI].color !== this.board.pieces[startI].color
-        ) {
-            this.audio.playTakes();
-        } else {
-            this.audio.playMove();
-        }
-    }
-
-    async attemptMove(endI) {
+    attemptMove(position) {
         if (this.draggedPiece) {
-            const startI = this.draggedPiece._positionIndex;
-            const draggedPiece = this.draggedPiece;
+            const draggedIndex = this.draggedPiece._positionIndex;
 
             let before = performance.now();
 
-            if (this.board.canMakeMove(startI, endI)) {
+            if (this.board.canMakeMove(draggedIndex, position)) {
+                console.log(`Making move ${draggedIndex} - ${position}`);
+                this.board.pieces[position]?.element.remove();
 
-                await this.makeMove(startI, endI);
+                this.board.makeMove(draggedIndex, position);
+                if (this.board.isInMate()) {
+                    this.audio.playMate();
+                } else if (this.board.isInCheck(this.board.nextToMove)) {
+                    this.audio.playCheck();
+                } else if (
+                    this.board.pieces[position] &&
+                    this.board.pieces[position].color !== this.draggedPiece.color
+                ) {
+                    this.audio.playTakes();
+                } else {
+                    this.audio.playMove();
+                }
 
                 if (this.board.isInMate()) {
                     console.log(`Checkmate. ${this.board.whiteToMove ? 'Black' : 'White'} wins`);
                 }
 
-                draggedPiece.element.remove();
-                this.cells[endI]?.append(draggedPiece.element);
+                this.draggedPiece.element.remove();
+                this.cells[position]?.append(this.draggedPiece.element);
                 this.query('.highlight')?.forEach(el => el.classList.remove('highlight'));
-
-                const move = await this.bot.makeMove(this.board);
-                await this.makeMove(...move);
             } else {
-                console.log(`Can't make move ${startI} - ${endI}`);
+                console.log(`Can't make move ${draggedIndex} - ${position}`);
 
                 if (this.draggedPiece.color !== this.board.colorToMove) {
                     console.log('not your move dumdum');
