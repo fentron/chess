@@ -1,0 +1,84 @@
+:root {
+  --max-width: 1200px;
+  --dark-cell-color: #705138;
+  --light-cell-color: #bea380;
+  font-family: roboto, sans-serif;
+  font-size: 18px;
+}
+
+body {
+  height: 100vh;
+  padding: 1em;
+}
+
+section {
+  max-width: var(--max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+section > * + * {
+  margin-top: 1em;
+}
+
+.row {
+  display: flex;
+}
+.row.wrap {
+  flex-wrap: wrap;
+}
+
+#board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 0 0;
+  background: repeating-conic-gradient(var(--dark-cell-color) 0% 25%, var(--light-cell-color) 0% 50%) 50%/25% 25%;
+  max-width: 800px;
+}
+#board .cell {
+  position: relative;
+}
+#board .cell::after {
+  padding-top: 100%;
+  display: block;
+  content: " ";
+}
+#board .cell.highlight {
+  background-color: rgba(0, 255, 0, 0.1);
+}
+#board .cell.highlight-attack {
+  background-color: rgba(255, 0, 0, 0.1);
+}
+#board .cell img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  height: 3.8em;
+  width: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+#board .cell .pos-indicator {
+  position: absolute;
+  right: 0.3em;
+  top: 0.25em;
+  display: inline-block;
+  transform: none;
+  left: auto;
+  font-size: 0.7rem;
+  font-weight: bold;
+  opacity: 0.35;
+}
+#board .dragged {
+  position: fixed !important;
+  cursor: pointer;
+  z-index: 999;
+}
+
+/*# sourceMappingURL=style.css.map */
