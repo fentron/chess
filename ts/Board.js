@@ -121,7 +121,6 @@ class Board {
     boardAfterMove(startI, finishI) {
         let board = new Board([]);
         let pieces = [];
-        // const startingFEN = this.getFENstring();
         for (let x = 0; x < 64; x++) {
             if (this.pieces[x]) {
                 // copy all pieces to a new instance, to prevent context/pointer fuckery when we change the position
@@ -155,7 +154,7 @@ class Board {
         }
         this._attackedPieces = attackedPieces;
     }
-    isInCheck(color) {
+    isInCheck(color = this.colorToMove) {
         for (let x = 0; x < this._attackedPieces.length; x++) {
             if (this._attackedPieces[x].piece.toLowerCase() === PieceTypes.King &&
                 this._attackedPieces[x].color !== color) {
@@ -168,11 +167,10 @@ class Board {
         return !!!this.getAllLegalMoves().length;
     }
     canMakeMove(startI, finishI) {
-        const boardAfterMove = this.boardAfterMove(startI, finishI);
         return (this.pieces[startI] && // piece exists
             this.pieces[startI].color === this.colorToMove && // correct color to move
             this.pieces[startI].getLegalMoveIndexes().includes(finishI) && // legal move for this piece
-            !boardAfterMove.isInCheck(boardAfterMove.colorToMove) // not a move that will put us in check
+            !this.boardAfterMove(startI, finishI).isInCheck() // not a move that will put us in check
         );
     }
     getAllLegalMoves() {
@@ -183,11 +181,14 @@ class Board {
         for (let x = 0; x < 64; x++) {
             let piece = this.pieces[x];
             if (piece) {
+                let startI = piece._positionIndex;
                 for (let y = 0; y < piece.getLegalMoveIndexes().length; y++) {
-                    let i = piece.getLegalMoveIndexes()[y];
-                    if (piece.color === this.colorToMove &&
-                        this.canMakeMove(piece._positionIndex, i)) {
-                        legalMoves.push([piece._positionIndex, i]);
+                    let finishI = piece.getLegalMoveIndexes()[y];
+                    if (piece.color === this.colorToMove && // correct color to move
+                        piece.getLegalMoveIndexes().includes(finishI) && // legal move for this piece
+                        !this.boardAfterMove(startI, finishI).isInCheck() // that doesn't put us in check
+                    ) {
+                        legalMoves.push([startI, finishI]);
                     }
                 }
             }
